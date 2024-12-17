@@ -1,4 +1,4 @@
-##**Automatic Question Generator and Summarizer Using Machine Learning**
+**Automatic Question Generator and Summarizer Using Machine Learning**
 
 ## **Overview**  
 The *Automatic Question Generator and Summarizer Using Machine Learning* is a powerful tool that leverages Natural Language Processing (NLP) models to simplify and automate the generation of questions and summaries from textual data. By employing advanced machine learning techniques, this system is capable of processing large volumes of text, extracting key information, and producing relevant questions or concise summaries. It is particularly useful for educational purposes, content creators, and researchers who need automated solutions for comprehension and content review.
