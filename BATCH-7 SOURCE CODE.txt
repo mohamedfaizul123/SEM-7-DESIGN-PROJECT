@@ -1,0 +1,153 @@
+ !pip install transformers torch nltk
+import nltk
+nltk.download('punkt')
+from transformers import T5ForConditionalGeneration, T5Tokenizer
+import torch
+import random
+from nltk.tokenize import sent_tokenize
+model_name = "t5-small"  # For more accuracy, use "t5-large" or a fine-tuned model on QA
+tokenizer = T5Tokenizer.from_pretrained(model_name)
+model = T5ForConditionalGeneration.from_pretrained(model_name)
+ def generate_ai_question(text, question_type="fill_in_the_blanks", num_questions=5):
+    sentences = sent_tokenize(text)
+    questions = []
+
+    for i in range(num_questions):
+        sentence = random.choice(sentences)
+        input_text = f"generate {question_type} question: {sentence}"
+        input_ids = tokenizer.encode(input_text, return_tensors="pt")
+
+        outputs = model.generate(input_ids, max_length=50, num_beams=5, early_stopping=True)
+        question = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+        questions.append(question)
+
+    return questions
+text = "Enter some sample text from a PDF or Word document here for question generation."
+questions = generate_ai_question(text, question_type="multiple choice", num_questions=3)
+for i, question in enumerate(questions, 1):
+    print(f"Q{i}: {question}")
+with open("ai_generated_questions.txt", "w") as file:
+    for question in questions:
+        file.write(f"{question}\n\n")
+print("Questions saved to ai_generated_questions.txt")
+ from sentence_transformers import SentenceTransformer, util
+embedder = SentenceTransformer('all-MiniLM-L6-v2')
+ def create_multiple_choice(sentence, correct_answer):
+    embeddings = embedder.encode([correct_answer] + sentence.split(), convert_to_tensor=True)
+    similar_words = util.semantic_search(embeddings[0:1], embeddings[1:], top_k=3)
+    distractors = [sentence.split()[idx['corpus_id']] for idx in similar_words[0]]
+    options = [correct_answer] + distractors
+    random.shuffle(options)
+    return options
+def generate_ai_question(text, question_type, num_questions):
+    generator = pipeline("text2text-generation", model="valhalla/t5-small-qa-qg-hl")
+    questions = []
+sentences = nltk.sent_tokenize(text)
+
+    for i in range(num_questions):
+        if question_type == 'fill_in_the_blanks':
+ sentence = random.choice(sentences)
+            word_to_remove = random.choice(sentence.split())
+            blanked_sentence = sentence.replace(word_to_remove, "")
+            questions.append(f"Fill in the blank: {blanked_sentence}")
+        elif question_type == 'multiple_choice':
+            question = generator(f"generate question: {text}")[0]['generated_text']
+            question_text = f"{question}?\nA. Option1\nB. Option2\nC. Option3\nD. Option4\nCorrect Answer: Sample Answer"
+            questions.append(question_text)
+        elif question_type == 'true_false':
+            question = generator(f"generate question: {text}")[0]['generated_text']
+            questions.append(f"{question} (True/False)")
+        elif question_type in ['2_marks', '5_marks', '10_marks', '16_marks']:
+random_sentence = random.choice(sentences)
+            question = generator(f"generate question: {random_sentence}")[0]['generated_text']
+            questions.append(f"{question} (For {question_type.replace('_marks', '')} marks)")
+
+    return questions
+ def main():
+ from google.colab import files
+    uploaded = files.upload()
+    file_name = list(uploaded.keys())[0]
+ text = load_text(open(file_name, "rb"))
+ print("Choose question type:")
+    print("1. Fill in the Blanks\n2. Multiple Choice\n3. True/False\n4. 2 Marks\n5. 5 Marks\n6. 10 Marks\n7. 16 Marks")
+    question_type = int(input("Enter choice (1-7): "))
+    num_questions = int(input("Enter the number of questions: "))
+ type_map = {1: 'fill_in_the_blanks', 2: 'multiple_choice', 3: 'true_false', 4: '2_marks', 5: '5_marks', 6: '10_marks', 7: '16_marks'}
+    chosen_type = type_map.get(question_type, 'fill_in_the_blanks')
+ questions = generate_ai_question(text, chosen_type, num_questions)
+ for i, question in enumerate(questions, 1):
+        print(f"Q{i}: {question}\n")
+main()
+ !pip install PyPDF2
+ import nltk
+nltk.download('punkt')
+nltk.download('punkt_tab')
+[14/11/2024 10:30] Caps: import random
+import nltk
+from transformers import pipeline
+from google.colab import files
+import gc
+ nltk.download('punkt')
+ def load_text(file):
+    if file.name.endswith('.pdf'):
+        from PyPDF2 import PdfReader
+        reader = PdfReader(file)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
+        return text
+    else:
+        return file.read().decode('utf-8')
+ def generate_ai_questions(text, question_counts):
+    generator = pipeline("text2text-generation", model="valhalla/t5-small-qa-qg-hl")
+    questions = []
+ sentences = nltk.sent_tokenize(text)
+for question_type, count in question_counts.items():
+        for _ in range(count):
+            if question_type == 'fill_in_the_blanks':
+                sentence = random.choice(sentences)
+                word_to_remove = random.choice(sentence.split())
+                blanked_sentence = sentence.replace(word_to_remove, "")
+                questions.append(f"Fill in the blank: {blanked_sentence}")
+            elif question_type == 'multiple_choice':
+                question = generator(f"generate question: {text}")[0]['generated_text']
+                question_text = f"{question}?\nA. Option1\nB. Option2\nC. Option3\nD. Option4\nCorrect Answer: Sample Answer"
+                questions.append(question_text)
+            elif question_type == 'true_false':
+                question = generator(f"generate question: {text}")[0]['generated_text']
+                questions.append(f"{question} (True/False)")
+            elif question_type in ['2_marks', '5_marks', '10_marks', '16_marks']:
+                random_sentence = random.choice(sentences)
+                question = generator(f"generate question: {random_sentence}")[0]['generated_text']
+                questions.append(f"{question} (For {question_type.replace('_marks', '')} marks)")
+
+    return questions
+ def main():
+ uploaded = files.upload()
+    file_name = list(uploaded.keys())[0]
+ text = load_text(open(file_name, "rb"))
+question_counts = {
+        'fill_in_the_blanks': 0,
+        'multiple_choice': 0,
+        'true_false': 0,
+        '2_marks': 0,
+        '5_marks': 0,
+        '10_marks': 0,
+        '16_marks': 0
+    }
+
+    print("Enter the number of questions for each type (Enter 0 if you don't want that type):")
+    question_counts['fill_in_the_blanks'] = int(input("Fill in the Blanks: "))
+    question_counts['multiple_choice'] = int(input("Multiple Choice: "))
+    question_counts['true_false'] = int(input("True/False: "))
+    question_counts['2_marks'] = int(input("2 Marks: "))
+    question_counts['5_marks'] = int(input("5 Marks: "))
+    question_counts['10_marks'] = int(input("10 Marks: "))
+    question_counts['16_marks'] = int(input("16 Marks: "))
+ questions = generate_ai_questions(text, question_counts)
+ for i, question in enumerate(questions, 1):
+        print(f"Q{i}: {question}\n")
+ del text, questions
+    gc.collect()
+main()
